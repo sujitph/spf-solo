@@ -2,15 +2,15 @@ name: Automated Upstream Sync
 
 on:
   schedule:
-    - cron: '0 0 * * 0' # Runs automatically every Sunday at midnight UTC
+    - cron: '0 0 1 * *' # Runs automatically at midnight on the 1st of every month
   workflow_dispatch: # Keeps a manual "Sync Now" button active in your Actions dashboard
 
 jobs:
   sync:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-      actions: write
+      contents: write # Grants permission to merge upstream code
+      actions: write  # CRITICAL: Grants permission to trigger your Docker build workflow
 
     steps:
     - name: Sync fork with upstream parent
@@ -20,9 +20,9 @@ jobs:
         echo "Fetching and merging upstream updates securely..."
         gh repo sync ${{ github.repository }} -b main
 
-    - name: Trigger Multi-Arch Image Build
+    - name: Force Multi-Arch Image Build (Updates Underlying OS)
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        echo "Forcing multi-arch compilation pipeline to process updates..."
+        echo "Forcing a rebuild to pull the latest underlying OS security patches..."
         gh workflow run "Build Multi-Arch Docker Image" -R ${{ github.repository }}
